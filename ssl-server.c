@@ -1,7 +1,7 @@
 /******************************************************************************
 
 PROGRAM:  ssl-server.c
-AUTHOR:   Jeff Hemmes
+AUTHOR:   Jack Peterson, Joseph Pham, Emil Welton
 COURSE:   CS469 - Distributed Systems (Regis University)
 SYNOPSIS: This program is a small server application that receives incoming TCP
           connections from clients and transfers a requested file from the
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
     unsigned int sockfd;
     unsigned int port;
     char         buffer[BUFFER_SIZE];
-    char         filename[PATH_LENGTH];
+    char         dirname[PATH_LENGTH];
     char         extra[PATH_LENGTH];
 
     // Initialize and create SSL data structures and algorithms
@@ -401,24 +401,25 @@ int main(int argc, char **argv)
 
 
 
-        // Check for invalid operation by comparing the first 8 chars to "getfile "
-	/*if (strncmp(buffer, "getfile ", 8) != 0) {
+  // Check for invalid operation by comparing the first 8 chars to "getfile "
+	if (strncmp(buffer, "cd ", 3) != 0) {
 	  sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
 	  SSL_write(ssl, buffer, strlen(buffer) + 1);
 
         // Check for too many parameters
-	} else if (sscanf(buffer, "getfile %s %s", filename, extra) == 2) {
+	} else if (sscanf(buffer, "cd %s %s", dirname, extra) == 2) {
 	  sprintf(buffer, "rpcerror %d", ERR_TOO_MANY_ARGS);
 	  SSL_write(ssl, buffer, strlen(buffer) + 1);
 
         // Check for too few parameters
-	} else if (sscanf(buffer, "getfile %s", filename) != 1) {
+	} else if (sscanf(buffer, "cd %s", dirname) != 1) {
 	  sprintf(buffer, "rpcerror %d", ERR_TOO_FEW_ARGS);
 	  SSL_write(ssl, buffer, strlen(buffer) + 1);
 
         // Check for the correct number of parameters
-	} else if (sscanf(buffer, "getfile %s", filename) == 1) {
+	} else if (sscanf(buffer, "cd %s", dirname) == 1) {
 
+    /*
           // Now check for a file error
 	  readfd = open(filename, O_RDONLY);
 	  if (readfd < 0) {
@@ -436,8 +437,9 @@ int main(int argc, char **argv)
 
 	    // File transfer complete
 	    fprintf(stdout, "Server: Completed file transfer to client (%s)\n", client_addr);
+      */
 	  }
-	}*/
+	}
 
 	// Terminate the SSL session, close the TCP connection, and clean up
 	fprintf(stdout, "Server: Terminating SSL session and TCP connection with client (%s)\n", client_addr);
