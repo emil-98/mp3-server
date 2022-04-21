@@ -1,7 +1,7 @@
 /******************************************************************************
 
 PROGRAM:  ssl-client.c
-AUTHOR:   Jeff Hemmes
+AUTHOR:   Jack Peterson, Joseph Pham, Emil Welton
 COURSE:   CS469 - Distributed Systems (Regis University)
 SYNOPSIS: This program is a small client application that establishes a secure TCP 
           connection to a server and simply exchanges messages.  It uses a SSL/TLS
