@@ -1,5 +1,5 @@
-# cs469-mp3
-## CS469 final project
+# CS469 Final Project
+## Authors: Jack Peterson, Joseph Pham, Emil Welton
 
 This project implements an MP3 server and client pair.
 
