@@ -13,7 +13,7 @@ The Client implements these functions:
 - [ ] Download an MP3 file
 - [ ] Play file and display metadata
 
-## Instructions:
+## Instructions
 To run this system:
 1. something
 2. something else
