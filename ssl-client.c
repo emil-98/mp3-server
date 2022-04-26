@@ -172,23 +172,6 @@ allocated to the SSL object and close the socket descriptor.
 ******************************************************************************/
 int main(int argc, char **argv)
 {
-<<<<<<< HEAD
-    const SSL_METHOD *method;
-    unsigned int port = DEFAULT_PORT;
-    char remote_host[MAX_HOSTNAME_LENGTH];
-    char filename[PATH_LENGTH] = {0};
-    char buffer[BUFFER_SIZE] = {0};
-    char *temp_ptr;
-    int sockfd;
-    int writefd;
-    int rcount;
-    int error_code;
-    int total = 0;
-    SSL_CTX *ssl_ctx;
-    SSL *ssl;
-
-    if (argc != 2)
-=======
   const SSL_METHOD* method;
   unsigned int      port = DEFAULT_PORT;
   char              remote_host[MAX_HOSTNAME_LENGTH];
@@ -205,7 +188,6 @@ int main(int argc, char **argv)
 
 
   if (argc != 2)
->>>>>>> 776056f322f93dafb79e4e623a12841d7a81c1d6
     {
         fprintf(stderr, "Client: Usage: ssl-client <server name>:<port>\n");
         exit(EXIT_FAILURE);
@@ -280,70 +262,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "Client: Could not establish SSL session to '%s' on port %u\n", remote_host, port);
         exit(EXIT_FAILURE);
     }
-<<<<<<< HEAD
-    char pass_buffer[USERNAME_LENGTH + HASH_LENGTH + 1];
-    char password[PASSWORD_LENGTH];
-    char username[USERNAME_LENGTH];
-    char hash[HASH_LENGTH];
-
-    fprintf(stdout, "Enter username: \n");
-    fgets(username, USERNAME_LENGTH, stdin);
-    username[strlen(username) - 1] = '\0';
-
-    fprintf(stdout, "Enter password: \n");
-    getPassword(password);
-
-    sprintf(pass_buffer, "user %s", username);
-    SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
-
-    sprintf(pass_buffer, "pass %s", password);
-    SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
-    // Request filename from user and strip trailing newline character
-    /* fprintf(stdout, "Enter file name: ");
-     fgets(filename, PATH_LENGTH, stdin);
-     filename[strlen(filename)-1] = '\0';
-
-     // Marshal the parameter into an RPC message
-     sprintf(buffer, "getfile %s", filename);
-     SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-     // Clear the buffer and await the reply
-     bzero(buffer, BUFFER_SIZE);
-     rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-     if (sscanf(buffer, "rpcerror %d", &error_code) == 1) {
-       fprintf(stderr, "Client: Bad request: ");
-       switch(error_code) {
-       case ERR_INVALID_OP:
-         fprintf(stderr, "Invalid message format\n");
-         break;
-       case ERR_TOO_FEW_ARGS:
-         fprintf(stderr, "No filename specified\n");
-         break;
-       case ERR_TOO_MANY_ARGS:
-         fprintf(stderr, "Too many file names provided\n");
-         break;
-       }
-     } else if (sscanf(buffer, "fileerror %d", &error_code) == 1) {
-       fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
-     } else {
-       writefd = creat(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-       do {
-         total += rcount;
-         write(writefd, buffer, rcount);
-         rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-       } while (rcount > 0);
-       close(writefd);
-       fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", filename, total);
-     }*/
-
-    // Deallocate memory for the SSL data structures and close the socket
-    SSL_free(ssl);
-    SSL_CTX_free(ssl_ctx);
-    close(sockfd);
-    fprintf(stdout, "Client: Terminated SSL/TLS connection with server '%s'\n", remote_host);
-
-    return (0);
-=======
   char  pass_buffer[USERNAME_LENGTH + HASH_LENGTH + 1];
   char  password[PASSWORD_LENGTH];
   char  username[USERNAME_LENGTH];
@@ -407,7 +325,6 @@ int main(int argc, char **argv)
   fprintf(stdout, "Client: Terminated SSL/TLS connection with server '%s'\n", remote_host);
 
   return(0);
->>>>>>> 776056f322f93dafb79e4e623a12841d7a81c1d6
 }
 
 void playFile(int fd)
