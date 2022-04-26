@@ -388,8 +388,6 @@ int main(int argc, char **argv)
   fprintf(stdout, "SERVER: Pass: %s\n", password);
   fprintf(stdout, "The salt is: %s\n", salt);
   fprintf(stdout, "The hash of the password (w/ salt) is: %s\n", hash);
-
-  
   
 
   strncpy(verifyHash, crypt(verifyPassword, salt), BUFFER_SIZE);
