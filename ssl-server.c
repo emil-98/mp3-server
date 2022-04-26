@@ -399,9 +399,9 @@ int main(int argc, char **argv)
   else
       fprintf(stdout, "Passwords or Username do not match\n");
 
+  rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
 
-
-  // Check for invalid operation by comparing the first 8 chars to "getfile "
+  // Check for invalid operation by comparing the first 8 chars to "cd "
 	if (strncmp(buffer, "cd ", 3) != 0) {
 	  sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
 	  SSL_write(ssl, buffer, strlen(buffer) + 1);
@@ -418,27 +418,8 @@ int main(int argc, char **argv)
 
         // Check for the correct number of parameters
 	} else if (sscanf(buffer, "cd %s", dirname) == 1) {
-
-    /*
-          // Now check for a file error
-	  readfd = open(filename, O_RDONLY);
-	  if (readfd < 0) {
-	    fprintf(stderr, "Server: Could not open file \"%s\": %s\n", filename, strerror(errno));
-	    sprintf(buffer, "fileerror %d", errno);
-	    SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-          // Passed all error checks, so transfer the file contents to the client
-	  } else {
-	    do {
-	      rcount = read(readfd, buffer, BUFFER_SIZE);
-	      SSL_write(ssl, buffer, rcount);
-	    } while (rcount > 0);
-	    close(readfd);
-
-	    // File transfer complete
-	    fprintf(stdout, "Server: Completed file transfer to client (%s)\n", client_addr);
-      */
-	  }
+      printf("cd with right number of params\n");
+   
 	}
 
 	// Terminate the SSL session, close the TCP connection, and clean up
@@ -453,4 +434,5 @@ int main(int argc, char **argv)
     close(sockfd);
 
     return 0;
+
 }

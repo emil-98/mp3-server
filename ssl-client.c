@@ -169,7 +169,7 @@ int main(int argc, char** argv)
   const SSL_METHOD* method;
   unsigned int      port = DEFAULT_PORT;
   char              remote_host[MAX_HOSTNAME_LENGTH];
-  char              filename[PATH_LENGTH] = {0};
+  char              command[PATH_LENGTH] = {0};
   char              buffer[BUFFER_SIZE] = {0};
   char*             temp_ptr;
   int               sockfd;
@@ -275,12 +275,12 @@ int main(int argc, char** argv)
   sprintf(pass_buffer, "pass %s", password);
   SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
   // Request filename from user and strip trailing newline character
- /* fprintf(stdout, "Enter file name: ");
-  fgets(filename, PATH_LENGTH, stdin);
-  filename[strlen(filename)-1] = '\0';
+  fprintf(stdout, "Enter Command: ");
+  fgets(command, PATH_LENGTH, stdin);
+  command[strlen(command)-1] = '\0';
 
   // Marshal the parameter into an RPC message
-  sprintf(buffer, "getfile %s", filename);
+  sprintf(buffer, "getfile %s", command);
   SSL_write(ssl, buffer, strlen(buffer) + 1);
 
   // Clear the buffer and await the reply
@@ -302,15 +302,15 @@ int main(int argc, char** argv)
   } else if (sscanf(buffer, "fileerror %d", &error_code) == 1) {
     fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
   } else {
-    writefd = creat(filename, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     do {
       total += rcount;
       write(writefd, buffer, rcount);
       rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
     } while (rcount > 0);
     close(writefd);
-    fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", filename, total);
-  }*/
+    fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
+  }
 
   // Deallocate memory for the SSL data structures and close the socket
   SSL_free(ssl);
