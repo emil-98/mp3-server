@@ -5,7 +5,7 @@ This project implements an MP3 server and client pair.
 
 The Server implements these functions:
 - [ ] Authentication of the user and the client
-- [ ] Lists the files and changes directories if requested
+- [ ] Lists the files
 - [ ] Download the requested MP3 file
 
 The Client implements these functions:
