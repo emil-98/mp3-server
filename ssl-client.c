@@ -25,6 +25,7 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
@@ -260,6 +261,7 @@ int main(int argc, char** argv)
   char  password[PASSWORD_LENGTH];
   char  username[USERNAME_LENGTH];
   char  hash[HASH_LENGTH];
+  char  subbuff[2];
 
   fprintf(stdout, "Enter username: \n");
   fgets(username, USERNAME_LENGTH, stdin);
@@ -268,48 +270,71 @@ int main(int argc, char** argv)
   fprintf(stdout, "Enter password: \n");
   getPassword(password);
 
-
   sprintf(pass_buffer, "user %s", username);
   SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
 
   sprintf(pass_buffer, "pass %s", password);
   SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
-  // Request filename from user and strip trailing newline character
-  fprintf(stdout, "Enter Command: ");
-  fgets(command, PATH_LENGTH, stdin);
-  command[strlen(command)-1] = '\0';
-
-  // Marshal the parameter into an RPC message
-  sprintf(buffer, "getfile %s", command);
-  SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-  // Clear the buffer and await the reply
   bzero(buffer, BUFFER_SIZE);
-  rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-  if (sscanf(buffer, "rpcerror %d", &error_code) == 1) {
-    fprintf(stderr, "Client: Bad request: ");
-    switch(error_code) {
-    case ERR_INVALID_OP:
-      fprintf(stderr, "Invalid message format\n");
-      break;
-    case ERR_TOO_FEW_ARGS:
-      fprintf(stderr, "No filename specified\n");
-      break;
-    case ERR_TOO_MANY_ARGS:
-      fprintf(stderr, "Too many file names provided\n");
+
+  while(true) {
+    // Request filename from user and strip trailing newline character
+    fprintf(stdout, "Enter 1 to list dir, 2 to download file, and 3 to exit: ");
+    fgets(command, PATH_LENGTH, stdin);
+    //command[strlen(command)-1] = '\0';
+
+    int cmd = atoi(command);
+    //first if command to check if directory change
+    if(cmd == 1) {
+
+      // Marshal the parameter into an RPC message
+      strcpy(buffer, "ls");
+      SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+      // Clear the buffer and await the reply
+      bzero(buffer, BUFFER_SIZE);
+      rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+      
+      //else if block for downloading
+    } else if(cmd == 2) { /*
+      // Marshal the parameter into an RPC message
+      sprintf(buffer, "getfile %s", command);
+      SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+      // Clear the buffer and await the reply
+      bzero(buffer, BUFFER_SIZE);
+      rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+      if (sscanf(buffer, "rpcerror %d", &error_code) == 1) {
+        fprintf(stderr, "Client: Bad request: ");
+        switch(error_code) {
+        case ERR_INVALID_OP:
+          fprintf(stderr, "Invalid message format\n");
+          break;
+        case ERR_TOO_FEW_ARGS:
+          fprintf(stderr, "No filename specified\n");
+          break;
+        case ERR_TOO_MANY_ARGS:
+          fprintf(stderr, "Too many file names provided\n");
+          break;
+        }
+      } else if (sscanf(buffer, "fileerror %d", &error_code) == 1) {
+        fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
+      } else {
+        writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        do {
+          total += rcount;
+          write(writefd, buffer, rcount);
+          rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+        } while (rcount > 0);
+        close(writefd);
+        fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
+      } */
+    
+  } else if(cmd == 3) //exit issuing commands
+    {
       break;
     }
-  } else if (sscanf(buffer, "fileerror %d", &error_code) == 1) {
-    fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
-  } else {
-    writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    do {
-      total += rcount;
-      write(writefd, buffer, rcount);
-      rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-    } while (rcount > 0);
-    close(writefd);
-    fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
+
   }
 
   // Deallocate memory for the SSL data structures and close the socket
