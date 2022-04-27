@@ -5,7 +5,7 @@ This project implements an MP3 server and client pair.
 
 The Server implements these functions:
 - [x] Authentication of the user and the client
-- [ ] Lists the files
+- [x] Lists the files
 - [ ] Download the requested MP3 file
 
 The Client implements these functions:
@@ -15,6 +15,6 @@ The Client implements these functions:
 
 ## Instructions
 To run this system:
-1. something
-2. something else
-3. third thing
+1. Run both server and client on port 4433
+2. Use 1, 2, or 3, to list, download, or exit the client.
+3. insert dl instructions here
