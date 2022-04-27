@@ -65,7 +65,7 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 // For file playback
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
-#include <sys/syslimits.h> // this is for getting the max file path size
+#include <limits.h> // this is for getting the max file path size
 
 /******************************************************************************
 
