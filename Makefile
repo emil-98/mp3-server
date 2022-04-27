@@ -1,9 +1,9 @@
 CC := gcc
-LDFLAGS := -lssl -lcrypto -lcrypt
+LDFLAGS := -lssl -lcrypto -lcrypt -lSDL2 -lSDL2_mixer
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
-CFLAGS := -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib
+CFLAGS := -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib -I/usr/include/SDL2 -D_REENTRANT
 endif
 
 all: ssl-client ssl-server
