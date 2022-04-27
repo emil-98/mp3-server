@@ -327,7 +327,7 @@ int main(int argc, char **argv)
   return(0);
 }
 
-void playFile(int fd)
+int playFile(int fd)
 {
     //metadata strings from ID3 tag
     char buffer[128];
@@ -338,5 +338,43 @@ void playFile(int fd)
 
     int flags = MIX_INIT_MP3;
     int result;
-    int fd;
+
+    if (fd < 0){
+        fprintf(stderr, "Could not open file. Error: %s\n", strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    //End of mp3 file contains metadata, so go to end and shift left 128 bytes to read the tag
+    lseek(fd, -128L, SEEK_END);
+
+    //Now, can start reading 128-byte tag from where we seeked to above
+    read(fd, buffer, 128);
+    close(fd);
+
+    //first 3 bytes are just "ID3", every 30 bytes following are each metadata field
+    strncpy(title, buffer + 3, 30);
+    strncpy(artist, buffer + 33, 30);
+    strncpy(album, buffer + 63, 30);
+    strncpy(year, buffer + 93, 4);
+
+    printf("Now Playing:\n");
+    printf("  Title: %s\n", title);
+    printf("  Artist: %s\n", artist);
+    printf("  Album: %s\n", album);
+    printf("  Year: %s\n", year);
+
+    //Start mixer, check for errors
+    result = Mix_Init(flags);
+    if(flags != result){
+        fprintf(stderr, "Could not initialize mixer (result: %d).\n", result);
+        fprintf(stderr, "playaudio: %s\n", Mix_GetError());
+        return EXIT_FAILURE;
+    }
+
+    //Open MP3 file
+    //VSCode doesnt like this AUDIO_S16SYS format specifier, says it's undefined
+    if(Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024) < 0){
+        fprintf(stderr, "playaudio: %s\n", Mix_GetError());
+        return EXIT_FAILURE;
+    }
 }
