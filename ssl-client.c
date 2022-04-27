@@ -65,7 +65,7 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 // For file playback
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
-#include <sys/syslimits.h> // this is for getting the max file path size
+#include <limits.h> // this is for getting the max file path size
 
 /******************************************************************************
 
@@ -416,6 +416,10 @@ int playFile(int fd)
             if (Mix_PlayingMusic() == 0)
                 break;
         }
+
+        Mix_FreeMusic(music);
+        Mix_CloseAudio();
+        Mix_Quit();
     }
     else
     {
@@ -423,9 +427,7 @@ int playFile(int fd)
         return EXIT_FAILURE;
     }
 
-    Mix_FreeMusic(music);
-    Mix_CloseAudio();
-    Mix_Quit();
+    
 
     return EXIT_SUCCESS;
 }
