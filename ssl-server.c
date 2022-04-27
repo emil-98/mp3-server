@@ -404,13 +404,8 @@ int main(int argc, char **argv)
   printf("Server Buffer: %s\n", buffer);
 
   if(strncmp("ls", buffer, 2) == 0) {
-    printf("In ls if\n");
-      if (argc == 1) {
-      strncpy(dirname, ".", 2);
-    } else {
-      strncpy(dirname, argv[1], PATH_LENGTH);
-      chdir(dirname);
-    }
+     
+    strcpy(dirname, "./data");
 
     // Save the current working directory so that stat will work properly
     // when getting the size in bytes of files in a different directory
@@ -443,11 +438,13 @@ int main(int argc, char **argv)
       if (S_ISDIR(fileInfo.st_mode)) {
         fprintf(stdout, "%-30s\t<dir>\n", currentEntry->d_name);
       } else {
-        fprintf(stdout, "%-30s\t%lu bytes\n", currentEntry->d_name, fileInfo.st_size);
+        sprintf(buffer, "%-30s\t<dir>\n", currentEntry->d_name);
+        SSL_write(ssl, buffer, strlen(buffer) + 1);
       }
 
       // Get the next directory entry
-      currentEntry = readdir(d);    
+      currentEntry = readdir(d);
+      bzero(buffer, BUFFER_SIZE);
     }
 
     // Change back to the original directory from where the program was invoked

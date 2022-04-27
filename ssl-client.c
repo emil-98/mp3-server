@@ -294,7 +294,13 @@ int main(int argc, char** argv)
       // Clear the buffer and await the reply
       bzero(buffer, BUFFER_SIZE);
       rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-      
+      printf("Available Songs:\n");
+      do {
+        total += rcount;
+        write(1, buffer, rcount);
+        rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+      } while (rcount > 0);
+
       //else if block for downloading
     } else if(cmd == 2) { /*
       // Marshal the parameter into an RPC message
