@@ -25,6 +25,7 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
@@ -311,26 +312,6 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
     }
-    else
-    {
-        writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-        do
-        {
-            total += rcount;
-            write(writefd, buffer, rcount);
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-        } while (rcount > 0);
-        close(writefd);
-        fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
-    }
-
-    // Deallocate memory for the SSL data structures and close the socket
-    SSL_free(ssl);
-    SSL_CTX_free(ssl_ctx);
-    close(sockfd);
-    fprintf(stdout, "Client: Terminated SSL/TLS connection with server '%s'\n", remote_host);
-
-    return (0);
 }
 
 int playFile(int fd)

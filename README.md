@@ -4,11 +4,18 @@
 This project implements an MP3 server and client pair.
 
 The Server implements these functions:
-- [ ] Authentication of the user and the client
-- [ ] Lists the files and changes directories if requested
+- [x] Authentication of the user and the client
+- [x] Lists the files
 - [ ] Download the requested MP3 file
 
 The Client implements these functions:
-- [ ] Prompting the username and password from the user
+- [x] Prompting the username and password from the user
 - [ ] Download an MP3 file
 - [ ] Play file and display metadata
+
+## Instructions
+To run this system:
+1. Run both server and client on port 4433 or any open port
+2. Enter in Username and Password (User: GroupProject Pass:hello)
+3. Use 1, 2, or 3, to list, download, or exit the client.
+4. insert dl instructions here
