@@ -1,5 +1,5 @@
 CC := gcc
-LDFLAGS := -lssl -lcrypto -lcrypt
+LDFLAGS := -o ssl-client -I/usr/include/SDL2 -D_REENTRANT -lSDL2 -lSDL2_mixer -lssl -lcrypto
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
