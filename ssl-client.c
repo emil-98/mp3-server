@@ -57,6 +57,7 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
+#include <dirent.h>
 
 #define PASS_BUFFER_SIZE 264
 #define PASSWORD_LENGTH 32
@@ -172,6 +173,11 @@ then the socket descriptor.  Once the session is complete, free the memory
 allocated to the SSL object and close the socket descriptor.
 
 ******************************************************************************/
+
+//Function prototypes
+int playFile(char input[PATH_MAX]);
+int listFiles(char dirName[PATH_MAX]);
+
 int main(int argc, char **argv)
 {
     const SSL_METHOD *method;
@@ -180,7 +186,7 @@ int main(int argc, char **argv)
     char command[PATH_LENGTH] = {0};
     char buffer[BUFFER_SIZE] = {0};
     char *temp_ptr;
-    char playFile;
+    char playChoice;
     int sockfd;
     int writefd;
     int rcount;
@@ -317,18 +323,17 @@ int main(int argc, char **argv)
     // Prompts user to play local file or not
     listFiles("./localData");
     printf("Play local file? (y/n)\n");
-    scanf("%c", &playFile);
+    scanf("%c", &playChoice);
 
     char filePath[PATH_MAX];
 
-    if (playFile == "y")
+    if (playChoice == 'y')
     {
         scanf("%s", filePath);
-        int fd = open(filePath, O_RDONLY);
         printf("Playing file %s...\n", filePath);
-        playFile(fd);
+        playFile(filePath);
     }
-    else if (playFile == "n")
+    else if (playChoice == 'n')
     {
         printf("Canceled by user");
         exit(EXIT_SUCCESS);
@@ -340,7 +345,7 @@ int main(int argc, char **argv)
     }
 }
 
-int playFile(int fd)
+int playFile(char input[PATH_MAX])
 {
     // metadata strings from ID3 tag
     char buffer[128];
@@ -350,9 +355,11 @@ int playFile(int fd)
     char year[5];
     char filePath[PATH_MAX];
 
+    int fd;
     int flags = MIX_INIT_MP3;
     int result;
 
+    fd = open(input, O_RDONLY);
     if (fd < 0)
     {
         fprintf(stderr, "Could not open file. Error: %s\n", strerror(errno));
@@ -395,37 +402,28 @@ int playFile(int fd)
         return EXIT_FAILURE;
     }
 
-    // Retrieve file path from descriptor
-    if (fcntl(fd, F_GETPATH, filePath) != -1)
+    // Load music file passed to method
+    Mix_Music *music = Mix_LoadMUS(input);
+    if (!music)
     {
-        // Load music file passed to method
-        Mix_Music *music = Mix_LoadMUS(filePath);
-        if (!music)
-        {
-            fprintf(stderr, "playaudio: %s\n", Mix_GetError());
-            return EXIT_FAILURE;
-        }
-
-        // plays song one time
-        Mix_PlayMusic(music, 1);
-
-        // Program ends immediately unless this is here, in which case it ends once music stops
-        while (1)
-        {
-            SDL_Delay(200);
-            if (Mix_PlayingMusic() == 0)
-                break;
-        }
-
-        Mix_FreeMusic(music);
-        Mix_CloseAudio();
-        Mix_Quit();
-    }
-    else
-    {
-        printf("Could not retrieve file path from descriptor\n");
+        fprintf(stderr, "playaudio: %s\n", Mix_GetError());
         return EXIT_FAILURE;
     }
+
+    // plays song one time
+    Mix_PlayMusic(music, 1);
+
+    // Program ends immediately unless this is here, in which case it ends once music stops
+    while (1)
+    {
+        SDL_Delay(200);
+        if (Mix_PlayingMusic() == 0)
+            break;
+    }
+
+    Mix_FreeMusic(music);
+    Mix_CloseAudio();
+    Mix_Quit();
 
     
 
@@ -436,7 +434,9 @@ int listFiles(char dirName[PATH_MAX])
 {
     struct dirent *de;
 
-    DIR *dr = opendir(".");
+    DIR *dr;
+    
+    dr = opendir(".");
 
     if (dr == NULL)
     {
