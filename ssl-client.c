@@ -64,6 +64,7 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 // For file playback
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
+#include <sys/syslimits.h> // this is for getting the max file path size
 
 /******************************************************************************
 
@@ -172,22 +173,21 @@ allocated to the SSL object and close the socket descriptor.
 ******************************************************************************/
 int main(int argc, char **argv)
 {
-  const SSL_METHOD* method;
-  unsigned int      port = DEFAULT_PORT;
-  char              remote_host[MAX_HOSTNAME_LENGTH];
-  char              command[PATH_LENGTH] = {0};
-  char              buffer[BUFFER_SIZE] = {0};
-  char*             temp_ptr;
-  int               sockfd;
-  int               writefd;
-  int               rcount;
-  int               error_code;
-  int               total = 0;
-  SSL_CTX*          ssl_ctx;
-  SSL*              ssl;
+    const SSL_METHOD *method;
+    unsigned int port = DEFAULT_PORT;
+    char remote_host[MAX_HOSTNAME_LENGTH];
+    char command[PATH_LENGTH] = {0};
+    char buffer[BUFFER_SIZE] = {0};
+    char *temp_ptr;
+    int sockfd;
+    int writefd;
+    int rcount;
+    int error_code;
+    int total = 0;
+    SSL_CTX *ssl_ctx;
+    SSL *ssl;
 
-
-  if (argc != 2)
+    if (argc != 2)
     {
         fprintf(stderr, "Client: Usage: ssl-client <server name>:<port>\n");
         exit(EXIT_FAILURE);
@@ -262,96 +262,104 @@ int main(int argc, char **argv)
         fprintf(stderr, "Client: Could not establish SSL session to '%s' on port %u\n", remote_host, port);
         exit(EXIT_FAILURE);
     }
-  char  pass_buffer[USERNAME_LENGTH + HASH_LENGTH + 1];
-  char  password[PASSWORD_LENGTH];
-  char  username[USERNAME_LENGTH];
-  char  hash[HASH_LENGTH];
+    char pass_buffer[USERNAME_LENGTH + HASH_LENGTH + 1];
+    char password[PASSWORD_LENGTH];
+    char username[USERNAME_LENGTH];
+    char hash[HASH_LENGTH];
 
-  fprintf(stdout, "Enter username: \n");
-  fgets(username, USERNAME_LENGTH, stdin);
-  username[strlen(username)-1] = '\0';
+    fprintf(stdout, "Enter username: \n");
+    fgets(username, USERNAME_LENGTH, stdin);
+    username[strlen(username) - 1] = '\0';
 
-  fprintf(stdout, "Enter password: \n");
-  getPassword(password);
+    fprintf(stdout, "Enter password: \n");
+    getPassword(password);
 
+    sprintf(pass_buffer, "user %s", username);
+    SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
 
-  sprintf(pass_buffer, "user %s", username);
-  SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
+    sprintf(pass_buffer, "pass %s", password);
+    SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
+    // Request filename from user and strip trailing newline character
+    fprintf(stdout, "Enter Command: ");
+    fgets(command, PATH_LENGTH, stdin);
+    command[strlen(command) - 1] = '\0';
 
-  sprintf(pass_buffer, "pass %s", password);
-  SSL_write(ssl, pass_buffer, strlen(pass_buffer) + 1);
-  // Request filename from user and strip trailing newline character
-  fprintf(stdout, "Enter Command: ");
-  fgets(command, PATH_LENGTH, stdin);
-  command[strlen(command)-1] = '\0';
+    // Marshal the parameter into an RPC message
+    sprintf(buffer, "getfile %s", command);
+    SSL_write(ssl, buffer, strlen(buffer) + 1);
 
-  // Marshal the parameter into an RPC message
-  sprintf(buffer, "getfile %s", command);
-  SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-  // Clear the buffer and await the reply
-  bzero(buffer, BUFFER_SIZE);
-  rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-  if (sscanf(buffer, "rpcerror %d", &error_code) == 1) {
-    fprintf(stderr, "Client: Bad request: ");
-    switch(error_code) {
-    case ERR_INVALID_OP:
-      fprintf(stderr, "Invalid message format\n");
-      break;
-    case ERR_TOO_FEW_ARGS:
-      fprintf(stderr, "No filename specified\n");
-      break;
-    case ERR_TOO_MANY_ARGS:
-      fprintf(stderr, "Too many file names provided\n");
-      break;
+    // Clear the buffer and await the reply
+    bzero(buffer, BUFFER_SIZE);
+    rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+    if (sscanf(buffer, "rpcerror %d", &error_code) == 1)
+    {
+        fprintf(stderr, "Client: Bad request: ");
+        switch (error_code)
+        {
+        case ERR_INVALID_OP:
+            fprintf(stderr, "Invalid message format\n");
+            break;
+        case ERR_TOO_FEW_ARGS:
+            fprintf(stderr, "No filename specified\n");
+            break;
+        case ERR_TOO_MANY_ARGS:
+            fprintf(stderr, "Too many file names provided\n");
+            break;
+        }
     }
-  } else if (sscanf(buffer, "fileerror %d", &error_code) == 1) {
-    fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
-  } else {
-    writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-    do {
-      total += rcount;
-      write(writefd, buffer, rcount);
-      rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-    } while (rcount > 0);
-    close(writefd);
-    fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
-  }
+    else if (sscanf(buffer, "fileerror %d", &error_code) == 1)
+    {
+        fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
+    }
+    else
+    {
+        writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        do
+        {
+            total += rcount;
+            write(writefd, buffer, rcount);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+        } while (rcount > 0);
+        close(writefd);
+        fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
+    }
 
-  // Deallocate memory for the SSL data structures and close the socket
-  SSL_free(ssl);
-  SSL_CTX_free(ssl_ctx);
-  close(sockfd);
-  fprintf(stdout, "Client: Terminated SSL/TLS connection with server '%s'\n", remote_host);
+    // Deallocate memory for the SSL data structures and close the socket
+    SSL_free(ssl);
+    SSL_CTX_free(ssl_ctx);
+    close(sockfd);
+    fprintf(stdout, "Client: Terminated SSL/TLS connection with server '%s'\n", remote_host);
 
-  return(0);
+    return (0);
 }
 
 int playFile(int fd)
 {
-    //metadata strings from ID3 tag
+    // metadata strings from ID3 tag
     char buffer[128];
     char title[31];
     char artist[31];
     char album[31];
     char year[5];
+    char filePath[PATH_MAX];
 
     int flags = MIX_INIT_MP3;
     int result;
 
-    if (fd < 0){
+    if (fd < 0)
+    {
         fprintf(stderr, "Could not open file. Error: %s\n", strerror(errno));
         return EXIT_FAILURE;
     }
 
-    //End of mp3 file contains metadata, so go to end and shift left 128 bytes to read the tag
+    // End of mp3 file contains metadata, so go to end and shift left 128 bytes to read the tag
     lseek(fd, -128L, SEEK_END);
 
-    //Now, can start reading 128-byte tag from where we seeked to above
+    // Now, can start reading 128-byte tag from where we seeked to above
     read(fd, buffer, 128);
     close(fd);
 
-    //first 3 bytes are just "ID3", every 30 bytes following are each metadata field
+    // first 3 bytes are just "ID3", every 30 bytes following are each metadata field
     strncpy(title, buffer + 3, 30);
     strncpy(artist, buffer + 33, 30);
     strncpy(album, buffer + 63, 30);
@@ -363,18 +371,54 @@ int playFile(int fd)
     printf("  Album: %s\n", album);
     printf("  Year: %s\n", year);
 
-    //Start mixer, check for errors
+    // Start mixer, check for errors
     result = Mix_Init(flags);
-    if(flags != result){
+    if (flags != result)
+    {
         fprintf(stderr, "Could not initialize mixer (result: %d).\n", result);
         fprintf(stderr, "playaudio: %s\n", Mix_GetError());
         return EXIT_FAILURE;
     }
 
-    //Open MP3 file
-    //VSCode doesnt like this AUDIO_S16SYS format specifier, says it's undefined
-    if(Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024) < 0){
+    // Open MP3 file
+    // VSCode doesnt like this AUDIO_S16SYS format specifier, says it's undefined
+    if (Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024) < 0)
+    {
         fprintf(stderr, "playaudio: %s\n", Mix_GetError());
         return EXIT_FAILURE;
     }
+
+    // Retrieve file path from descriptor
+    if (fcntl(fd, F_GETPATH, filePath) != -1)
+    {
+        // Load music file passed to method
+        Mix_Music *music = Mix_LoadMUS(filePath);
+        if (!music)
+        {
+            fprintf(stderr, "playaudio: %s\n", Mix_GetError());
+            return EXIT_FAILURE;
+        }
+
+        // plays song one time
+        Mix_PlayMusic(music, 1);
+
+        // Program ends immediately unless this is here, in which case it ends once music stops
+        while (1)
+        {
+            SDL_Delay(200);
+            if (Mix_PlayingMusic() == 0)
+                break;
+        }
+    }
+    else
+    {
+        printf("Could not retrieve file path from descriptor");
+        return EXIT_FAILURE;
+    }
+
+    Mix_FreeMusic(music);
+    Mix_CloseAudio();
+    Mix_Quit();
+
+    return EXIT_SUCCESS;
 }
