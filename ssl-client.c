@@ -314,22 +314,27 @@ int main(int argc, char **argv)
         fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
     }
 
-    //Prompts user to play local file or not
+    // Prompts user to play local file or not
     listFiles("./localData");
     printf("Play local file? (y/n)\n");
     scanf("%c", &playFile);
 
     char filePath[PATH_MAX];
 
-    if(playFile == "y"){
+    if (playFile == "y")
+    {
         scanf("%s", filePath);
         int fd = open(filePath, O_RDONLY);
         printf("Playing file %s...\n", filePath);
         playFile(fd);
-    }else if(playFile == "n"){
+    }
+    else if (playFile == "n")
+    {
         printf("Canceled by user");
         exit(EXIT_SUCCESS);
-    }else{
+    }
+    else
+    {
         printf("Invalid input");
         exit(EXIT_FAILURE);
     }
@@ -425,23 +430,25 @@ int playFile(int fd)
     return EXIT_SUCCESS;
 }
 
-int listFiles(char dirName[PATH_MAX]){
+int listFiles(char dirName[PATH_MAX])
+{
     struct dirent *de;
 
     DIR *dr = opendir(".");
 
-    if(dr == NULL){
+    if (dr == NULL)
+    {
         printf("Could not open current directory\n");
         return 0;
     }
 
     printf("Locally stored mp3 files:\n");
 
-    while ((de = readdir(dr)) != NULL){
-        printf("%s\n", de -> d_name);
+    while ((de = readdir(dr)) != NULL)
+    {
+        printf("%s\n", de->d_name);
     }
     printf("To open file, use its name\n");
     closedir(dr);
     return 0;
-
 }
