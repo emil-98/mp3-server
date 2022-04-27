@@ -16,5 +16,6 @@ The Client implements these functions:
 ## Instructions
 To run this system:
 1. Run both server and client on port 4433 or any open port
-2. Use 1, 2, or 3, to list, download, or exit the client.
-3. insert dl instructions here
+2. Enter in Username and Password (User: GroupProject Pass:hello)
+3. Use 1, 2, or 3, to list, download, or exit the client.
+4. insert dl instructions here
