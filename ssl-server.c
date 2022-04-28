@@ -458,49 +458,61 @@ int main(int argc, char **argv)
 
                 closedir(d);
             }
-            else
+            else if(strncmp("dl", buffer, 2) == 0)
             {
-                /*
                 // Receive RPC request and transfer the file
                 bzero(buffer, BUFFER_SIZE);
                 rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-                      // Check for invalid operation by comparing the first 8 chars to "getfile "
-                if (strncmp(buffer, "getfile ", 8) != 0) {
-                  sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
-                  SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                      // Check for too many parameters
-                } else if (sscanf(buffer, "getfile %s %s", filename, extra) == 2) {
-                  sprintf(buffer, "rpcerror %d", ERR_TOO_MANY_ARGS);
-                  SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                      // Check for too few parameters
-                } else if (sscanf(buffer, "getfile %s", filename) != 1) {
-                  sprintf(buffer, "rpcerror %d", ERR_TOO_FEW_ARGS);
-                  SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                      // Check for the correct number of parameters
-                } else if (sscanf(buffer, "getfile %s", filename) == 1) {
-
-                        // Now check for a file error
-                  readfd = open(filename, O_RDONLY);
-                  if (readfd < 0) {
-                    fprintf(stderr, "Server: Could not open file \"%s\": %s\n", filename, strerror(errno));
-                    sprintf(buffer, "fileerror %d", errno);
+                // Check for invalid operation by comparing the first 8 chars to "getfile "
+                if (strncmp(buffer, "getfile ", 8) != 0)
+                {
+                    sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
                     SSL_write(ssl, buffer, strlen(buffer) + 1);
 
-                        // Passed all error checks, so transfer the file contents to the client
-                  } else {
-                    do {
-                      rcount = read(readfd, buffer, BUFFER_SIZE);
-                      SSL_write(ssl, buffer, rcount);
-                    } while (rcount > 0);
-                    close(readfd);
+                    // Check for too many parameters
+                }
+                else if (sscanf(buffer, "getfile %s %s", filename, extra) == 2)
+                {
+                    sprintf(buffer, "rpcerror %d", ERR_TOO_MANY_ARGS);
+                    SSL_write(ssl, buffer, strlen(buffer) + 1);
 
-                    // File transfer complete
-                    fprintf(stdout, "Server: Completed file transfer to client (%s)\n", client_addr);
-                  }
-                 } */
+                    // Check for too few parameters
+                }
+                else if (sscanf(buffer, "getfile %s", filename) != 1)
+                {
+                    sprintf(buffer, "rpcerror %d", ERR_TOO_FEW_ARGS);
+                    SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                    // Check for the correct number of parameters
+                }
+                else if (sscanf(buffer, "getfile %s", filename) == 1)
+                {
+
+                    // Now check for a file error
+                    readfd = open(filename, O_RDONLY);
+                    if (readfd < 0)
+                    {
+                        fprintf(stderr, "Server: Could not open file \"%s\": %s\n", filename, strerror(errno));
+                        sprintf(buffer, "fileerror %d\n", errno);
+                        SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                        // Passed all error checks, so transfer the file contents to the client
+                    }
+                    else
+                    {
+                        do
+                        {
+                            rcount = read(readfd, buffer, BUFFER_SIZE);
+                            SSL_write(ssl, buffer, rcount);
+                        } while (rcount > 0);
+                        close(readfd);
+
+                        // File transfer complete
+                        fprintf(stdout, "Server: Completed file transfer to client (%s)\n", client_addr);
+                    }
+                }
+            }else{
+                printf("Unrecognized command\n");
             }
         }
         else
