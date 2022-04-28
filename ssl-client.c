@@ -68,6 +68,10 @@ SYNOPSIS: This program is a small client application that establishes a secure T
 #include <SDL2/SDL_mixer.h>
 #include <limits.h> // this is for getting the max file path size
 
+// For downloading
+#define CLIENT_DIR "./localData/"
+#define SERVER_DIR "./data/"
+
 /******************************************************************************
 
 This function does the basic necessary housekeeping to establish a secure TCP
@@ -275,6 +279,8 @@ int main(int argc, char **argv)
     char username[USERNAME_LENGTH];
     char hash[HASH_LENGTH];
     char subbuff[2];
+    char filename[PATH_LENGTH];
+    char extra[PATH_LENGTH];
 
     fprintf(stdout, "Enter username: \n");
     fgets(username, USERNAME_LENGTH, stdin);
@@ -321,8 +327,17 @@ int main(int argc, char **argv)
         }
         else if (cmd == 2) //for downloading files
         {
+            // Request file path from user
+            fprintf(stdout, "Enter filename: ");
+            fgets(filename, PATH_LENGTH, stdin);
+            filename[strlen(filename)-1] = '\0';
+
+            // Combine path to data folder with filename
+            char nameAndPath[PATH_LENGTH];
+            sprintf(nameAndPath, "%s%s", SERVER_DIR, filename);
+
             // Marshal the parameter into an RPC message
-            sprintf(buffer, "getfile %s", command);
+            sprintf(buffer, "getfile %s", nameAndPath);
             SSL_write(ssl, buffer, strlen(buffer) + 1);
 
             // Clear the buffer and await the reply
@@ -350,7 +365,13 @@ int main(int argc, char **argv)
             }
             else
             {
-                writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+                // Clear variable before setting again
+                bzero(nameAndPath, PATH_LENGTH);
+
+                // Combine path to client data folder with filename
+                sprintf(nameAndPath, "%s%s", CLIENT_DIR, filename);
+
+                writefd = creat(nameAndPath, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
                 do
                 {
                     total += rcount;
@@ -358,7 +379,7 @@ int main(int argc, char **argv)
                     rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
                 } while (rcount > 0);
                 close(writefd);
-                fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
+                fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", filename, total);
             }
         }
         else if (cmd == 3)
@@ -372,6 +393,7 @@ int main(int argc, char **argv)
 
             if (playChoice == 'y')
             {
+                printf("Enter './localData/<filename>.mp3' to play song\n");
                 scanf("%s", filePath);
                 printf("Playing file %s...\n", filePath);
                 playFile(filePath);
@@ -452,7 +474,6 @@ int playFile(char input[PATH_MAX])
     }
 
     // Open MP3 file
-    // VSCode doesnt like this AUDIO_S16SYS format specifier, says it's undefined
     if (Mix_OpenAudio(44100, AUDIO_S16SYS, 2, 1024) < 0)
     {
         fprintf(stderr, "playaudio: %s\n", Mix_GetError());
@@ -505,7 +526,6 @@ int listFiles(char dirName[PATH_MAX])
     {
         printf("%s\n", de->d_name);
     }
-    printf("To open file, use its name\n");
     closedir(dr);
     return 0;
 }

@@ -362,7 +362,7 @@ int main(int argc, char **argv)
         char password[PASSWORD_LENGTH];
         char username[USERNAME_LENGTH];
         char verifyPassword[PASSWORD_LENGTH] = "hello";
-        char verifyUser[PASSWORD_LENGTH] = "GroupProject";
+        char verifyUser[USERNAME_LENGTH] = "GroupProject";
         char hash[BUFFER_SIZE];
         char verifyHash[BUFFER_SIZE];
         char *seedchars = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -458,7 +458,7 @@ int main(int argc, char **argv)
 
                 closedir(d);
             }
-            else if(strncmp("dl", buffer, 2) == 0)
+            else if(strncmp("getfile ", buffer, 8) == 0)
             {
                 // Receive RPC request and transfer the file
                 bzero(buffer, BUFFER_SIZE);
@@ -513,6 +513,8 @@ int main(int argc, char **argv)
                 }
             }else{
                 printf("Unrecognized command\n");
+                sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
+                SSL_write(ssl, buffer, strlen(buffer) + 1);
             }
         }
         else
