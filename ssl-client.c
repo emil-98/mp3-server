@@ -293,7 +293,7 @@ int main(int argc, char **argv)
     while (true)
     {
         // Request filename from user and strip trailing newline character
-        fprintf(stdout, "Enter 1 to list dir, 2 to download file, and 3 to exit: ");
+        fprintf(stdout, "Enter 1 to list dir, 2 to download file, 3 to play local file and 4 to exit: ");
         fgets(command, PATH_LENGTH, stdin);
         // command[strlen(command)-1] = '\0';
 
@@ -354,34 +354,38 @@ close(writefd);
 fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
 } */
         }
-        else if (cmd == 3) // exit issuing commands
+        else if (cmd == 3) 
+        {
+            // Prompts user to play local file or not
+            listFiles("./localData");
+            printf("Play local file? (y/n)\n");
+            scanf("%c", &playChoice);
+
+            char filePath[PATH_MAX];
+
+            if (playChoice == 'y')
+            {
+                scanf("%s", filePath);
+                printf("Playing file %s...\n", filePath);
+                playFile(filePath);
+            }
+            else if (playChoice == 'n')
+            {
+                printf("Canceled by user");
+                exit(EXIT_SUCCESS);
+            }
+            else
+            {
+                printf("Invalid input");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else if(cmd == 4) // exit issuing commands
         {
             break;
         }
 
-        // Prompts user to play local file or not
-        listFiles("./localData");
-        printf("Play local file? (y/n)\n");
-        scanf("%c", &playChoice);
-
-        char filePath[PATH_MAX];
-
-        if (playChoice == 'y')
-        {
-            scanf("%s", filePath);
-            printf("Playing file %s...\n", filePath);
-            playFile(filePath);
-        }
-        else if (playChoice == 'n')
-        {
-            printf("Canceled by user");
-            exit(EXIT_SUCCESS);
-        }
-        else
-        {
-            printf("Invalid input");
-            exit(EXIT_FAILURE);
-        }
+        
     }
 
     // Deallocate memory for the SSL data structures and close the socket
@@ -482,7 +486,7 @@ int listFiles(char dirName[PATH_MAX])
 
     DIR *dr;
 
-    dr = opendir(".");
+    dr = opendir(dirName);
 
     if (dr == NULL)
     {
