@@ -319,42 +319,49 @@ int main(int argc, char **argv)
 
             // else if block for downloading
         }
-        else if (cmd == 2)
-        { /*
-// Marshal the parameter into an RPC message
-sprintf(buffer, "getfile %s", command);
-SSL_write(ssl, buffer, strlen(buffer) + 1);
+        else if (cmd == 2) //for downloading files
+        {
+            // Marshal the parameter into an RPC message
+            sprintf(buffer, "getfile %s", command);
+            SSL_write(ssl, buffer, strlen(buffer) + 1);
 
-// Clear the buffer and await the reply
-bzero(buffer, BUFFER_SIZE);
-rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-if (sscanf(buffer, "rpcerror %d", &error_code) == 1) {
-fprintf(stderr, "Client: Bad request: ");
-switch(error_code) {
-case ERR_INVALID_OP:
-fprintf(stderr, "Invalid message format\n");
-break;
-case ERR_TOO_FEW_ARGS:
-fprintf(stderr, "No filename specified\n");
-break;
-case ERR_TOO_MANY_ARGS:
-fprintf(stderr, "Too many file names provided\n");
-break;
-}
-} else if (sscanf(buffer, "fileerror %d", &error_code) == 1) {
-fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
-} else {
-writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-do {
-total += rcount;
-write(writefd, buffer, rcount);
-rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
-} while (rcount > 0);
-close(writefd);
-fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
-} */
+            // Clear the buffer and await the reply
+            bzero(buffer, BUFFER_SIZE);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+            if (sscanf(buffer, "rpcerror %d", &error_code) == 1)
+            {
+                fprintf(stderr, "Client: Bad request: ");
+                switch (error_code)
+                {
+                case ERR_INVALID_OP:
+                    fprintf(stderr, "Invalid message format\n");
+                    break;
+                case ERR_TOO_FEW_ARGS:
+                    fprintf(stderr, "No filename specified\n");
+                    break;
+                case ERR_TOO_MANY_ARGS:
+                    fprintf(stderr, "Too many file names provided\n");
+                    break;
+                }
+            }
+            else if (sscanf(buffer, "fileerror %d", &error_code) == 1)
+            {
+                fprintf(stderr, "Client: Could not retrieve file: %s\n", strerror(error_code));
+            }
+            else
+            {
+                writefd = creat(command, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+                do
+                {
+                    total += rcount;
+                    write(writefd, buffer, rcount);
+                    rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+                } while (rcount > 0);
+                close(writefd);
+                fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", command, total);
+            }
         }
-        else if (cmd == 3) 
+        else if (cmd == 3)
         {
             // Prompts user to play local file or not
             listFiles("./localData");
@@ -380,12 +387,10 @@ fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from serv
                 exit(EXIT_FAILURE);
             }
         }
-        else if(cmd == 4) // exit issuing commands
+        else if (cmd == 4) // exit issuing commands
         {
             break;
         }
-
-        
     }
 
     // Deallocate memory for the SSL data structures and close the socket
