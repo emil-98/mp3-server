@@ -6,12 +6,12 @@ This project implements an MP3 server and client pair.
 The Server implements these functions:
 - [x] Authentication of the user and the client
 - [x] Lists the files
-- [ ] Download the requested MP3 file
+- [x] Download the requested MP3 file
 
 The Client implements these functions:
 - [x] Prompting the username and password from the user
-- [ ] Download an MP3 file
-- [ ] Play file and display metadata
+- [x] Download an MP3 file
+- [x] Play file and display metadata
 
 ## Instructions
 To run this system:
