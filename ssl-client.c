@@ -404,10 +404,13 @@ int main(int argc, char **argv)
                 // Clear variable before setting again
                 bzero(nameAndPath, PATH_LENGTH);
 
+                //filename input
+                scanf("%s", filename);
+
                 // Combine path to client data folder with filename
                 sprintf(nameAndPath, "%s%s", CLIENT_DIR, filename);
 
-                scanf("%s", nameAndPath);
+
                 printf("Playing file %s...\n", nameAndPath);
                 playFile(filePath);
             }
