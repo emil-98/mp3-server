@@ -412,7 +412,7 @@ int main(int argc, char **argv)
 
 
                 printf("Playing file %s...\n", nameAndPath);
-                playFile(filePath);
+                playFile(nameAndPath);
             }
             else if (playChoice == 'n')
             {
