@@ -333,7 +333,7 @@ int main(int argc, char **argv)
             filename[strlen(filename)-1] = '\0';
 
             // Combine path to data folder with filename
-            char nameAndPath[PATH_LENGTH];
+            char nameAndPath[PATH_LENGTH + strlen(filename)];
             sprintf(nameAndPath, "%s%s", SERVER_DIR, filename);
 
             // Marshal the parameter into an RPC message
@@ -342,7 +342,7 @@ int main(int argc, char **argv)
 
             // Clear the buffer and await the reply
             bzero(buffer, BUFFER_SIZE);
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
             if (sscanf(buffer, "rpcerror %d", &error_code) == 1)
             {
                 fprintf(stderr, "Client: Bad request: ");
