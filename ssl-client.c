@@ -342,7 +342,7 @@ int main(int argc, char **argv)
 
             // Clear the buffer and await the reply
             bzero(buffer, BUFFER_SIZE);
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
             if (sscanf(buffer, "rpcerror %d", &error_code) == 1)
             {
                 fprintf(stderr, "Client: Bad request: ");

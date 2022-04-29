@@ -399,7 +399,7 @@ int main(int argc, char **argv)
         {
             fprintf(stdout, "Passwords and Username match. User authenticated\n");
 
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
 
             printf("Server Buffer: %s\n", buffer);
 
@@ -460,9 +460,10 @@ int main(int argc, char **argv)
             }
             else if(strncmp("getfile ", buffer, 8) == 0)
             {
+                printf("Getfile command received\n");
                 // Receive RPC request and transfer the file
-                bzero(buffer, BUFFER_SIZE);
-                rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+                // bzero(buffer, BUFFER_SIZE);
+                // rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
                 // Check for invalid operation by comparing the first 8 chars to "getfile "
                 if (strncmp(buffer, "getfile ", 8) != 0)
                 {
