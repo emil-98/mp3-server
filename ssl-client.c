@@ -321,6 +321,9 @@ int main(int argc, char **argv)
                 total += rcount;
                 write(1, buffer, rcount);
                 rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+                if(strncmp("EOF", buffer, 3) == 0){
+                    break;
+                }
             } while (rcount > 0);
 
             // else if block for downloading
@@ -342,7 +345,7 @@ int main(int argc, char **argv)
 
             // Clear the buffer and await the reply
             bzero(buffer, BUFFER_SIZE);
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
             if (sscanf(buffer, "rpcerror %d", &error_code) == 1)
             {
                 fprintf(stderr, "Client: Bad request: ");
@@ -377,6 +380,9 @@ int main(int argc, char **argv)
                     total += rcount;
                     write(writefd, buffer, rcount);
                     rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+                    if(strncmp("EOF", buffer, 3) == 0){
+                        break;
+                    }
                 } while (rcount > 0);
                 close(writefd);
                 fprintf(stdout, "Client: Successfully transferred file '%s' (%d bytes) from server\n", filename, total);
@@ -411,6 +417,8 @@ int main(int argc, char **argv)
         }
         else if (cmd == 4) // exit issuing commands
         {
+            sprintf(buffer, "exit");
+            SSL_write(ssl, buffer, strlen(buffer) + 1);
             break;
         }
     }

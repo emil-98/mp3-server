@@ -399,136 +399,149 @@ int main(int argc, char **argv)
         {
             fprintf(stdout, "Passwords and Username match. User authenticated\n");
 
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
-
-            printf("Server Buffer: %s\n", buffer);
-
-            if (strncmp("ls", buffer, 2) == 0)
+            while (true)
             {
+                rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
 
-                strcpy(dirname, "./data");
+                printf("Server Buffer: %s\n", buffer);
 
-                // Save the current working directory so that stat will work properly
-                // when getting the size in bytes of files in a different directory
-                getcwd(olddir, PATH_LENGTH);
-
-                // Open the directory and check for error
-                d = opendir(dirname);
-                if (d == NULL)
-                {
-                    fprintf(stderr, "Could not open directory %s: %s\n", dirname, strerror(errno));
-                    return EXIT_FAILURE;
-                }
-
-                // Change to the directory being listed so that the calls to stat on each
-                // directory entry will work correctly
-                chdir(dirname);
-
-                // Read each entry in the directory and display name and size
-                currentEntry = readdir(d);
-
-                // Iterate through all directory entries
-                while (currentEntry != NULL)
+                if (strncmp("ls", buffer, 2) == 0)
                 {
 
-                    // Use stat to get the size of the file in bytes.  If the program is listing
-                    // a directory other than the working directory of this program, the stat
-                    // call here will not work properly since d_name is relative
-                    if (stat(currentEntry->d_name, &fileInfo) < 0)
-                        fprintf(stderr, "stat: %s: %s\n", currentEntry->d_name, strerror(errno));
+                    strcpy(dirname, "./data");
 
-                    // Check to see if the item is a subdirectory
-                    if (S_ISDIR(fileInfo.st_mode))
+                    // Save the current working directory so that stat will work properly
+                    // when getting the size in bytes of files in a different directory
+                    getcwd(olddir, PATH_LENGTH);
+
+                    // Open the directory and check for error
+                    d = opendir(dirname);
+                    if (d == NULL)
                     {
-                        fprintf(stdout, "%-30s\t<dir>\n", currentEntry->d_name);
-                    }
-                    else
-                    {
-                        sprintf(buffer, "%-30s\t<dir>\n", currentEntry->d_name);
-                        SSL_write(ssl, buffer, strlen(buffer) + 1);
+                        fprintf(stderr, "Could not open directory %s: %s\n", dirname, strerror(errno));
+                        return EXIT_FAILURE;
                     }
 
-                    // Get the next directory entry
+                    // Change to the directory being listed so that the calls to stat on each
+                    // directory entry will work correctly
+                    chdir(dirname);
+
+                    // Read each entry in the directory and display name and size
                     currentEntry = readdir(d);
-                    bzero(buffer, BUFFER_SIZE);
+
+                    // Iterate through all directory entries
+                    while (currentEntry != NULL)
+                    {
+
+                        // Use stat to get the size of the file in bytes.  If the program is listing
+                        // a directory other than the working directory of this program, the stat
+                        // call here will not work properly since d_name is relative
+                        if (stat(currentEntry->d_name, &fileInfo) < 0)
+                            fprintf(stderr, "stat: %s: %s\n", currentEntry->d_name, strerror(errno));
+
+                        // Check to see if the item is a subdirectory
+                        if (S_ISDIR(fileInfo.st_mode))
+                        {
+                            fprintf(stdout, "%-30s\t<dir>\n", currentEntry->d_name);
+                        }
+                        else
+                        {
+                            sprintf(buffer, "%-30s\t<dir>\n", currentEntry->d_name);
+                            SSL_write(ssl, buffer, strlen(buffer) + 1);
+                        }
+
+                        // Get the next directory entry
+                        currentEntry = readdir(d);
+                        bzero(buffer, BUFFER_SIZE);
+                    }
+                    sprintf(buffer, "EOF");
+                    SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                    // Change back to the original directory from where the program was invoked
+                    chdir(olddir);
+
+                    closedir(d);
                 }
-
-                // Change back to the original directory from where the program was invoked
-                chdir(olddir);
-
-                closedir(d);
-            }
-            else if(strncmp("getfile ", buffer, 8) == 0)
-            {
-                // Check for invalid operation by comparing the first 8 chars to "getfile "
-                if (strncmp(buffer, "getfile ", 8) != 0)
+                else if (strncmp("getfile ", buffer, 8) == 0)
                 {
+                    // Check for invalid operation by comparing the first 8 chars to "getfile "
+                    if (strncmp(buffer, "getfile ", 8) != 0)
+                    {
+                        sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
+                        SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                        // Check for too many parameters
+                    }
+                    else if (sscanf(buffer, "getfile %s %s", filename, extra) == 2)
+                    {
+                        sprintf(buffer, "rpcerror %d", ERR_TOO_MANY_ARGS);
+                        SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                        // Check for too few parameters
+                    }
+                    else if (sscanf(buffer, "getfile %s", filename) != 1)
+                    {
+                        sprintf(buffer, "rpcerror %d", ERR_TOO_FEW_ARGS);
+                        SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                        // Check for the correct number of parameters
+                    }
+                    else if (sscanf(buffer, "getfile %s", filename) == 1)
+                    {
+
+                        // Now check for a file error
+                        readfd = open(filename, O_RDONLY);
+                        if (readfd < 0)
+                        {
+                            fprintf(stderr, "Server: Could not open file \"%s\": %s\n", filename, strerror(errno));
+                            sprintf(buffer, "fileerror %d\n", errno);
+                            SSL_write(ssl, buffer, strlen(buffer) + 1);
+
+                            // Passed all error checks, so transfer the file contents to the client
+                        }
+                        else
+                        {
+                            do
+                            {
+                                rcount = read(readfd, buffer, BUFFER_SIZE);
+                                SSL_write(ssl, buffer, rcount);
+                            } while (rcount > 0);
+                            sprintf(buffer, "EOF");
+                            SSL_write(ssl, buffer, strlen(buffer) + 1);
+                            close(readfd);
+
+                            // File transfer complete
+                            fprintf(stdout, "Server: Completed file transfer to client (%s)\n", client_addr);
+                        }
+                    }
+                }
+                else if (strncmp("exit", buffer, 4) == 0)
+                {
+                    // Tear down and clean up server data structures before terminating
+                    SSL_CTX_free(ssl_ctx);
+                    cleanup_openssl();
+                    close(sockfd);
+
+                    // Terminate the SSL session, close the TCP connection, and clean up
+                    fprintf(stdout, "Server: Terminating SSL session and TCP connection with client (%s)\n", client_addr);
+                    SSL_free(ssl);
+                    close(client);
+                    break;
+                }
+                else
+                {
+                    printf("Unrecognized command\n");
                     sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
                     SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                    // Check for too many parameters
                 }
-                else if (sscanf(buffer, "getfile %s %s", filename, extra) == 2)
-                {
-                    sprintf(buffer, "rpcerror %d", ERR_TOO_MANY_ARGS);
-                    SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                    // Check for too few parameters
-                }
-                else if (sscanf(buffer, "getfile %s", filename) != 1)
-                {
-                    sprintf(buffer, "rpcerror %d", ERR_TOO_FEW_ARGS);
-                    SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                    // Check for the correct number of parameters
-                }
-                else if (sscanf(buffer, "getfile %s", filename) == 1)
-                {
-
-                    // Now check for a file error
-                    readfd = open(filename, O_RDONLY);
-                    if (readfd < 0)
-                    {
-                        fprintf(stderr, "Server: Could not open file \"%s\": %s\n", filename, strerror(errno));
-                        sprintf(buffer, "fileerror %d\n", errno);
-                        SSL_write(ssl, buffer, strlen(buffer) + 1);
-
-                        // Passed all error checks, so transfer the file contents to the client
-                    }
-                    else
-                    {
-                        do
-                        {
-                            rcount = read(readfd, buffer, BUFFER_SIZE);
-                            SSL_write(ssl, buffer, rcount);
-                        } while (rcount > 0);
-                        close(readfd);
-
-                        // File transfer complete
-                        fprintf(stdout, "Server: Completed file transfer to client (%s)\n", client_addr);
-                    }
-                }
-            }else{
-                printf("Unrecognized command\n");
-                sprintf(buffer, "rpcerror %d", ERR_INVALID_OP);
-                SSL_write(ssl, buffer, strlen(buffer) + 1);
             }
+            break;
         }
         else
         {
             fprintf(stdout, "Passwords or Username do not match\n");
         }
-
-        // Terminate the SSL session, close the TCP connection, and clean up
-        fprintf(stdout, "Server: Terminating SSL session and TCP connection with client (%s)\n", client_addr);
-        SSL_free(ssl);
-        close(client);
     }
-
-    // Tear down and clean up server data structures before terminating
-    SSL_CTX_free(ssl_ctx);
-    cleanup_openssl();
-    close(sockfd);
-
+    exit(EXIT_SUCCESS);
     return 0;
 }
