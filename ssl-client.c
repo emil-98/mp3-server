@@ -281,6 +281,7 @@ int main(int argc, char **argv)
     char subbuff[2];
     char filename[PATH_LENGTH];
     char extra[PATH_LENGTH];
+    char nameAndPath[PATH_LENGTH + strlen(filename)];
 
     fprintf(stdout, "Enter username: \n");
     fgets(username, USERNAME_LENGTH, stdin);
@@ -336,7 +337,6 @@ int main(int argc, char **argv)
             filename[strlen(filename)-1] = '\0';
 
             // Combine path to data folder with filename
-            char nameAndPath[PATH_LENGTH + strlen(filename)];
             sprintf(nameAndPath, "%s%s", SERVER_DIR, filename);
 
             // Marshal the parameter into an RPC message
@@ -399,9 +399,16 @@ int main(int argc, char **argv)
 
             if (playChoice == 'y')
             {
-                printf("Enter './localData/<filename>.mp3' to play song\n");
-                scanf("%s", filePath);
-                printf("Playing file %s...\n", filePath);
+                printf("Enter filename to play song\n");
+
+                // Clear variable before setting again
+                bzero(nameAndPath, PATH_LENGTH);
+
+                // Combine path to client data folder with filename
+                sprintf(nameAndPath, "%s%s", CLIENT_DIR, filename);
+
+                scanf("%s", nameAndPath);
+                printf("Playing file %s...\n", nameAndPath);
                 playFile(filePath);
             }
             else if (playChoice == 'n')
