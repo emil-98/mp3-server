@@ -399,7 +399,7 @@ int main(int argc, char **argv)
         {
             fprintf(stdout, "Passwords and Username match. User authenticated\n");
 
-            rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
+            rcount = SSL_read(ssl, buffer, BUFFER_SIZE - 1);
 
             printf("Server Buffer: %s\n", buffer);
 
