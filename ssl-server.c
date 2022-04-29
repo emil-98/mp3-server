@@ -460,9 +460,6 @@ int main(int argc, char **argv)
             }
             else if(strncmp("getfile ", buffer, 8) == 0)
             {
-                // Receive RPC request and transfer the file
-                bzero(buffer, BUFFER_SIZE);
-                rcount = SSL_read(ssl, buffer, BUFFER_SIZE);
                 // Check for invalid operation by comparing the first 8 chars to "getfile "
                 if (strncmp(buffer, "getfile ", 8) != 0)
                 {

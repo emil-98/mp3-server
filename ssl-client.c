@@ -333,7 +333,7 @@ int main(int argc, char **argv)
             filename[strlen(filename)-1] = '\0';
 
             // Combine path to data folder with filename
-            char nameAndPath[PATH_LENGTH];
+            char nameAndPath[PATH_LENGTH + strlen(filename)];
             sprintf(nameAndPath, "%s%s", SERVER_DIR, filename);
 
             // Marshal the parameter into an RPC message
