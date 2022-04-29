@@ -17,5 +17,9 @@ The Client implements these functions:
 To run this system:
 1. Run both server and client on port 4433 or any open port
 2. Enter in Username and Password (User: GroupProject Pass:hello)
-3. Use 1, 2, or 3, to list, download, or exit the client.
-4. insert dl instructions here
+3. Use 1, 2, 3, or 4 to list, download, or exit the client.
+
+## Downloading files from server
+1. Login to system
+2. Enter 2 to download file
+3. Enter filename with .mp3 extension
