@@ -2,7 +2,6 @@
 
 PROGRAM:  ssl-server.c
 AUTHOR:   Jack Peterson, Joseph Pham, Emil Welton
-COURSE:   CS469 - Distributed Systems (Regis University)
 SYNOPSIS: This program is a small server application that receives incoming TCP
           connections from clients and transfers a requested file from the
           server to the client.  It uses a secure SSL/TLS connection using
@@ -20,7 +19,6 @@ SYNOPSIS: This program is a small server application that receives incoming TCP
           Some of the code and descriptions can be found in "Network Security with
           OpenSSL", O'Reilly Media, 2002.
 
-          (c) Regis University
 ******************************************************************************/
 #include <fcntl.h>
 #include <stdio.h>
